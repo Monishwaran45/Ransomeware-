@@ -5,10 +5,22 @@ build/
 dist/
 wheels/
 *.egg-info
+*.log
 
 # Virtual environments
-.venv
+.venv/
+env/
+venv/
 
 # CatBoost training logs
 catboost_info/
 
+# Scratch & Temporary scripts
+scratch/
+
+# Generated logs
+logs/*.csv
+
+# Large Raw Datasets (if applicable)
+*.zip
+*.tar.gz

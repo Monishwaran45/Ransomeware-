@@ -1,0 +1,26 @@
+# Configuration file for Ransomware Detection & Real-Time Monitoring Pipeline
+
+app:
+  name: "CIC-MalMem-2022 Ransomware Detector"
+  version: "1.0.0"
+
+models:
+  best_model_path: "models/best_model.pkl"
+  feature_names_path: "models/feature_names.pkl"
+  preprocessing_pipeline_path: "models/preprocessing_pipeline.pkl"
+  random_forest_tuned_path: "models/random_forest_tuned.pkl"
+
+thresholds:
+  risk:
+    low_max: 0.30
+    medium_max: 0.70
+    high_min: 0.70
+
+logging:
+  predictions_csv: "logs/predictions.csv"
+  alerts_csv: "logs/alerts.csv"
+  behavioral_csv: "logs/behavioral_events.csv"
+
+monitoring:
+  window_seconds: 5
+  collect_interval_seconds: 2
