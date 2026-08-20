@@ -1,4 +1,4 @@
-# CIC-MalMem-2022 Ransomware Detection & Real-Time Monitoring System
+# Ransomware Detection & Real-Time Monitoring System
 
 Production-grade machine learning research and inference pipeline for detecting memory-based ransomware threats using the **CIC-MalMem-2022** dataset, equipped with SHAP explainability, feature validation, alerting, and behavioral telemetry.
 
@@ -37,7 +37,7 @@ The following 6 machine learning models were evaluated on the 30-feature subset:
 6. **LightGBM**
 7. **CatBoost**
 
-## 6. Results
+## 6. Results & Model Evaluation
 Evaluation on test set and 5-fold cross-validation results:
 
 | Model | Test Accuracy | Test Precision | Test Recall | Test F1-Score | Test ROC-AUC | 5-Fold CV F1 (Mean ± Std) |
@@ -52,11 +52,21 @@ Evaluation on test set and 5-fold cross-validation results:
 
 > **Model Selection Rationale**: The **Tuned Random Forest** (`models/best_model.pkl`) was selected as the final production model due to its optimal balance between near-perfect 5-fold cross-validation stability (F1: 0.999803), robust generalization against overfitting (max_depth=30, min_samples_leaf=2), fast inference speed, and native compatibility with SHAP TreeExplainer.
 
+### Evaluation Visualizations
+| Model Comparison | Confusion Matrix | ROC Curve |
+| :---: | :---: | :---: |
+| ![Model Comparison](reports/figures/model_comparison.png) | ![Confusion Matrix](reports/figures/confusion_matrix.png) | ![ROC Curve](reports/figures/roc_curve.png) |
+
 ## 7. Explainability (SHAP Analysis)
-Global and local model interpretability plots are generated under `reports/figures/`:
-- **Global Feature Importance (`shap_bar.png`)**: Quantifies average impact across test samples.
-- **SHAP Beeswarm Plot (`shap_beeswarm.png`)**: Illustrates feature value distribution vs prediction impact.
-- **Local Explanation (`shap_waterfall.png`)**: Explains individual sample predictions.
+Global and local model interpretability plots generated for the Tuned Random Forest model:
+
+### Global Feature Importance & Feature Impact
+| SHAP Bar Plot | SHAP Beeswarm Plot |
+| :---: | :---: |
+| ![SHAP Bar Plot](reports/figures/shap_bar.png) | ![SHAP Beeswarm Plot](reports/figures/shap_beeswarm.png) |
+
+### Local Waterfall Explanation
+![SHAP Waterfall Plot](reports/figures/shap_waterfall.png)
 
 **Top 5 Discriminative Features**:
 1. `handles.nhandles`: High total handle counts correlate strongly with ransomware encryption routines.
@@ -94,7 +104,9 @@ Global and local model interpretability plots are generated under `reports/figur
 ```
 
 ## 9. Real-Time Monitoring Limitations & Architecture
-- **Technical Limitation**: The 30 CIC-MalMem features represent deep memory forensic metrics (`ldrmodules`, `malfind`, `callbacks`, `psxview`, specific handle object counts) extracted from raw RAM memory dumps using Volatility. Standard Windows user-mode APIs (`psutil`) can only collect basic process/thread counts.
+> [!IMPORTANT]
+> **Technical Limitation**: The 30 CIC-MalMem features represent deep memory forensic metrics (`ldrmodules`, `malfind`, `callbacks`, `psxview`, specific handle object counts) extracted from raw RAM memory dumps using Volatility. Standard Windows user-mode APIs (`psutil`) can only collect basic process/thread counts.
+
 - **Safety Enforcement**: The system **never silently substitutes** missing memory features with live file rename or CPU metrics.
 - **Monitoring Modes**:
   - `replay`: Replays valid 30-feature vectors through the full prediction, risk scoring, logging, and alerting pipeline.
@@ -123,7 +135,7 @@ pip install -r requirements.txt
 ## 11. Usage
 
 ### Replay Mode (Full Pipeline Test)
-Run 5 dataset samples through validation, prediction, risk scoring, logging, and alerting:
+Run dataset samples through validation, prediction, risk scoring, logging, and alerting:
 ```bash
 python main.py --mode replay --samples 5
 ```
@@ -186,6 +198,7 @@ Ransomware/
 ```
 
 ## 13. Safety Note
+> [!CAUTION]
 > **CRITICAL SECURITY NOTE**: This project is developed purely for cybersecurity research, defensive threat detection, and forensic analysis. Do **NOT** use real ransomware binaries or execute live malware samples for testing. All testing must be conducted using static feature replay vectors or safe synthetic event simulators.
 
 ## 14. Future Work
