@@ -76,31 +76,34 @@ Global and local model interpretability plots generated for the Tuned Random For
 5. `malfind.commitCharge`: Memory commit charge associated with injected executable regions.
 
 ## 8. System Architecture
-```
-                                 ┌───────────────────────────────┐
-                                 │   CIC-MalMem-2022 Dataset     │
-                                 └──────────────┬────────────────┘
-                                                │
-                                 ┌──────────────▼────────────────┐
-                                 │  RansomwarePredictor Validation│
-                                 │   - Check 30 feature names    │
-                                 │   - Validate feature order    │
-                                 └──────────────┬────────────────┘
-                                                │
-                                 ┌──────────────▼────────────────┐
-                                 │  Tuned Random Forest Model    │
-                                 │  (models/best_model.pkl)      │
-                                 └──────────────┬────────────────┘
-                                                │
-                                 ┌──────────────▼────────────────┐
-                                 │  Risk Threshold Engine        │
-                                 │  LOW / MEDIUM / HIGH          │
-                                 └──────┬─────────────────┬──────┘
-                                        │                 │
-                         ┌──────────────▼──────┐   ┌──────▼──────────────┐
-                         │  MonitoringLogger   │   │     AlertSystem     │
-                         │  logs/predictions.csv  │   │   logs/alerts.csv   │
-                         └─────────────────────┘   └─────────────────────┘
+
+```mermaid
+flowchart TD
+    A["Raw Input Data (Dataset Vector / Memory Snapshot)"] --> B["RansomwarePredictor Validation"]
+    
+    subgraph Preprocessing ["Production Schema Validation (src/predictor.py)"]
+        B --> C1["30 Feature Count Validation"]
+        B --> C2["Feature Name & Order Alignment Check"]
+        C1 -->|Validated| D["30-Feature Matrix"]
+        C2 -->|Validated| D
+    end
+    
+    subgraph Model ["Inference & Risk Engine"]
+        D --> E["Tuned Random Forest Model (models/best_model.pkl)"]
+        E --> F["Ransomware Probability Calculation"]
+        F --> G["Risk Level Assessment"]
+    end
+    
+    G -->|Prob < 0.30| H1["LOW Risk"]
+    G -->|0.30 <= Prob < 0.70| H2["MEDIUM Risk"]
+    G -->|Prob >= 0.70| H3["HIGH Risk"]
+    
+    subgraph Output ["Logging & Alerting Subsystem"]
+        H1 --> I1["MonitoringLogger (logs/predictions.csv)"]
+        H2 --> I1
+        H3 --> I1
+        H3 --> I2["AlertSystem (logs/alerts.csv & Console)"]
+    end
 ```
 
 ## 9. Real-Time Monitoring Limitations & Architecture
