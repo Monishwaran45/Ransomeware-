@@ -1,7 +1,7 @@
 # Configuration file for Ransomware Detection & Real-Time Monitoring Pipeline
 
 app:
-  name: "CIC-MalMem-2022 Ransomware Detector"
+  name: "Ransomware Detection System"
   version: "1.0.0"
 
 models:

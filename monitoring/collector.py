@@ -37,11 +37,30 @@ class DataCollector:
         self.volatility_adapter = VolatilityDumpAdapter()
 
     def get_replay_sample(self, row_index: int = 0) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Loads a single feature vector from the CIC-MalMem dataset for offline replay testing."""
+        """Loads a single feature vector from the test dataset for offline replay testing."""
         feature_df = pd.read_csv("data/selected_features.csv")
         feature_names = feature_df["Feature"].tolist()
 
         try:
+            X_test = joblib.load("data/processed/X_test.pkl")
+            y_test = joblib.load("data/processed/y_test.pkl")
+            idx = row_index % len(X_test)
+            
+            if isinstance(X_test, pd.DataFrame):
+                vec_df = X_test.iloc[[idx]][feature_names]
+            else:
+                vec_df = pd.DataFrame([X_test[idx]], columns=feature_names)
+
+            label_val = y_test.iloc[idx] if hasattr(y_test, "iloc") else y_test[idx]
+            label_str = "Ransomware" if (label_val == 1 or str(label_val).lower() in ["1", "ransomware", "malware"]) else "Benign"
+
+            meta = {
+                "source": "Processed X_test.pkl Replay",
+                "row_index": idx,
+                "original_label": label_str
+            }
+            return vec_df, meta
+        except Exception:
             raw_df = pd.read_csv(self.dataset_csv_path)
             sample_row = raw_df.iloc[row_index]
             vec_df = pd.DataFrame([sample_row[feature_names]])
@@ -49,18 +68,6 @@ class DataCollector:
                 "source": "CIC-MalMem-2022 Dataset Replay",
                 "row_index": row_index,
                 "original_label": sample_row.get("Category", sample_row.get("Class", "Unknown"))
-            }
-            return vec_df, meta
-        except Exception as e:
-            # Fallback to test pkl if raw CSV is unavailable
-            X_test = joblib.load("data/processed/X_test.pkl")
-            y_test = joblib.load("data/processed/y_test.pkl")
-            idx = row_index % len(X_test)
-            vec_df = pd.DataFrame([X_test[idx]], columns=feature_names)
-            meta = {
-                "source": "Processed X_test.pkl Replay",
-                "row_index": idx,
-                "original_label": "Ransomware" if y_test[idx] == 1 else "Benign"
             }
             return vec_df, meta
 

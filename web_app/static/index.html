@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Defense SOC | Ransomware Detection & Real-Time Monitoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.2">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Sticky Wrapper -->
+  <div class="top-nav-wrapper">
+    <header class="soc-header">
+      <div class="brand-section">
+        <div class="brand-logo-mark">
+          <i data-lucide="shield" style="width: 20px; height: 20px; color: #000;"></i>
+        </div>
+        <div class="brand-text-wrap">
+          <div class="brand-title">Cyber Defense SOC</div>
+          <div class="brand-sub" id="headerModelSub">Loading Classifier Pipeline...</div>
+        </div>
+      </div>
+      
+      <div class="header-status-wrap">
+        <div id="liveHealthBadge" class="soc-status-pill">
+          <span class="pulse-dot"></span>
+          <span id="healthText">SYSTEM SECURE</span>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.775rem; color: var(--text-gray-400); font-weight: 500;" id="liveClock">
+          --:--:--
+        </div>
+      </div>
+    </header>
+
+    <!-- Segmented Navigation Bar -->
+    <nav class="soc-nav-bar">
+      <button class="soc-tab-btn active" data-tab="tab-overview">
+        <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i>
+        <span>Overview</span>
+      </button>
+      <button class="soc-tab-btn" data-tab="tab-predictor">
+        <i data-lucide="scan-line" style="width: 16px; height: 16px;"></i>
+        <span>Forensics Studio</span>
+      </button>
+      <button class="soc-tab-btn" data-tab="tab-replay">
+        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+        <span>Live Stream & Replay</span>
+      </button>
+      <button class="soc-tab-btn" data-tab="tab-shap">
+        <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+        <span>Explainability (SHAP)</span>
+      </button>
+      <button class="soc-tab-btn" data-tab="tab-benchmarks">
+        <i data-lucide="bar-chart-2" style="width: 16px; height: 16px;"></i>
+        <span>Model Benchmarks</span>
+      </button>
+      <button class="soc-tab-btn" data-tab="tab-logs">
+        <i data-lucide="terminal" style="width: 16px; height: 16px;"></i>
+        <span>Audit & Host Telemetry</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Main Viewport -->
+  <main class="soc-main-container">
+
+    <!-- ==================== TAB 1: SOC OVERVIEW ==================== -->
+    <section id="tab-overview" class="tab-pane active">
+      <!-- Top Dynamic Metrics Bar -->
+      <div class="grid-4">
+        <div class="soc-stat-card">
+          <div class="soc-stat-label">
+            <span>Total Evaluated Scans</span>
+            <i data-lucide="activity" style="width: 16px; height: 16px; color: var(--text-white);"></i>
+          </div>
+          <div class="soc-stat-value" id="kpiTotalScans">0</div>
+          <div class="soc-stat-footer">Persistent audit records</div>
+        </div>
+
+        <div class="soc-stat-card">
+          <div class="soc-stat-label">
+            <span>Threats Intercepted</span>
+            <i data-lucide="alert-octagon" style="width: 16px; height: 16px; color: #ff6b6b;"></i>
+          </div>
+          <div class="soc-stat-value" style="color: #ff6b6b;" id="kpiRansomwareCount">0</div>
+          <div class="soc-stat-footer" id="kpiThreatRate">0.0% Detection Rate</div>
+        </div>
+
+        <div class="soc-stat-card">
+          <div class="soc-stat-label">
+            <span>Benign Cleared</span>
+            <i data-lucide="check-circle-2" style="width: 16px; height: 16px; color: var(--status-green);"></i>
+          </div>
+          <div class="soc-stat-value" style="color: var(--status-green);" id="kpiBenignCount">0</div>
+          <div class="soc-stat-footer">Verified Clean Host Signatures</div>
+        </div>
+
+        <div class="soc-stat-card">
+          <div class="soc-stat-label">
+            <span>Active Classifier</span>
+            <i data-lucide="cpu" style="width: 16px; height: 16px; color: var(--text-gray-400);"></i>
+          </div>
+          <div class="soc-stat-value" style="font-size: 1.35rem; margin-top: 6px;" id="kpiActiveModel">Random Forest</div>
+          <div class="soc-stat-footer" id="kpiModelStats">Accuracy: 99.99% | Recall: 100%</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2">
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div>
+              <div class="soc-card-title">
+                <i data-lucide="trending-up" style="width: 18px; height: 18px;"></i>
+                <span>Live Threat Severity Progression</span>
+              </div>
+              <div class="soc-card-sub">Real-time risk scoring across incoming memory vectors</div>
+            </div>
+            <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill" onclick="refreshOverview()">
+              <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i> Refresh
+            </button>
+          </div>
+          <div style="height: 280px;">
+            <canvas id="threatTimelineChart"></canvas>
+          </div>
+        </div>
+
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div class="soc-card-title">
+              <i data-lucide="pie-chart" style="width: 18px; height: 18px;"></i>
+              <span>Risk Categorization Ratio</span>
+            </div>
+          </div>
+          <div style="height: 220px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="riskDonutChart"></canvas>
+          </div>
+          <div style="display: flex; justify-content: space-around; font-size: 0.775rem; font-weight: 600; margin-top: 12px;">
+            <span style="color: var(--status-green);">LOW: <span id="distLow">0</span></span>
+            <span style="color: var(--status-amber);">MEDIUM: <span id="distMed">0</span></span>
+            <span style="color: #ff6b6b;">HIGH: <span id="distHigh">0</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Threat Alerts -->
+      <div class="soc-card">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title">
+              <i data-lucide="shield-alert" style="width: 18px; height: 18px; color: #ff6b6b;"></i>
+              <span>High-Priority Security Alerts</span>
+            </div>
+            <div class="soc-card-sub">Dynamic alert dispatch log for high-risk evaluations</div>
+          </div>
+          <span class="soc-badge HIGH" id="alertCountBadge">0 Incidents</span>
+        </div>
+        <div class="soc-table-wrap">
+          <table class="soc-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Classification</th>
+                <th>Confidence</th>
+                <th>Risk Level</th>
+                <th>Origin / Context</th>
+                <th>Feature Source</th>
+              </tr>
+            </thead>
+            <tbody id="overviewAlertsTable">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-gray-400); padding: 24px;">No security incidents recorded.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 2: FORENSICS STUDIO ==================== -->
+    <section id="tab-predictor" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em;">Memory Forensic Inspector</h2>
+          <p style="color: var(--text-gray-400); font-size: 0.85rem;" id="forensicsSchemaSub">
+            Dynamically loaded feature schema directly from model artifacts.
+          </p>
+        </div>
+        <!-- Dynamic Preset Buttons Container -->
+        <div id="dynamicPresetPills" class="preset-pill-group">
+          <!-- Populated dynamically via JS from /api/presets -->
+        </div>
+      </div>
+
+      <div class="grid-2" style="align-items: start;">
+        <!-- Left: Dynamically Rendered Feature Inputs -->
+        <div class="soc-card">
+          <form id="forensicsForm" onsubmit="event.preventDefault(); runPredict();">
+            <!-- Dynamic Category Blocks Container -->
+            <div id="dynamicFeatureCategories">
+              <div style="padding: 24px; text-align: center; color: var(--text-gray-400);">Loading feature schemas dynamically...</div>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <button type="submit" class="soc-btn soc-btn-primary" style="width: 100%;">
+                <i data-lucide="zap" style="width: 16px; height: 16px;"></i> Evaluate Forensic Vector
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: Dynamic Verdict Panel -->
+        <div class="soc-verdict-card">
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-gray-400); text-transform: uppercase; letter-spacing: 0.08em;">
+            Forensic Verdict
+          </div>
+
+          <!-- Gauge Dial -->
+          <div class="verdict-dial-wrap">
+            <canvas id="predictionGaugeCanvas" width="190" height="190"></canvas>
+            <div class="verdict-dial-center">
+              <span id="resConfidence" class="verdict-score" style="color: var(--status-green);">0.0%</span>
+              <span style="font-size: 0.7rem; color: var(--text-gray-400); font-weight: 600; text-transform: uppercase;">Confidence</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <span id="resRiskBadge" class="soc-badge LOW">LOW RISK</span>
+          </div>
+
+          <div id="resVerdictText" class="verdict-title" style="color: var(--status-green);">
+            BENIGN
+          </div>
+          <div id="resSummarySub" style="font-size: 0.825rem; color: var(--text-gray-400); margin-bottom: 24px; line-height: 1.4;">
+            Process parameters conform to benign baseline behavior.
+          </div>
+
+          <!-- Key Contributing Factors (Dynamic z-score ranking) -->
+          <div style="width: 100%; text-align: left; border-top: 1px solid var(--border-subtle); padding-top: 20px;">
+            <div style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; color: var(--text-gray-400); letter-spacing: 0.05em; margin-bottom: 12px;">
+              Dynamic Anomaly & Importance Indicators:
+            </div>
+            <div id="resFeatureBreakdown" style="display: flex; flex-direction: column; gap: 8px; font-size: 0.75rem; font-family: var(--font-mono);">
+              <!-- Populated dynamically by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 3: LIVE STREAM & REPLAY ==================== -->
+    <section id="tab-replay" class="tab-pane">
+      <div class="soc-card" style="margin-bottom: 24px;">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title">
+              <i data-lucide="play-circle" style="width: 18px; height: 18px;"></i>
+              <span>Dataset Replay Streamer</span>
+            </div>
+            <div class="soc-card-sub">Streams authentic vectors dynamically through the live inference pipeline</div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button id="btnReplayStream" class="soc-btn soc-btn-primary soc-btn-sm soc-btn-pill" onclick="toggleReplayStream()">
+              <i data-lucide="play" style="width: 14px; height: 14px;"></i> Start Continuous Stream
+            </button>
+            <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill" onclick="stepReplaySample()">
+              <i data-lucide="skip-forward" style="width: 14px; height: 14px;"></i> Step Sample
+            </button>
+            <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill" onclick="runBatchReplay(10)">
+              <i data-lucide="fast-forward" style="width: 14px; height: 14px;"></i> Batch 10
+            </button>
+          </div>
+        </div>
+
+        <!-- Stream Live Timeline -->
+        <div style="height: 220px; margin-bottom: 24px;">
+          <canvas id="replayStreamChart"></canvas>
+        </div>
+
+        <!-- Replay Table -->
+        <div class="soc-table-wrap">
+          <table class="soc-table">
+            <thead>
+              <tr>
+                <th>Sample #</th>
+                <th>Ground Truth</th>
+                <th>Model Prediction</th>
+                <th>Confidence</th>
+                <th>Risk Level</th>
+                <th>Match Verdict</th>
+                <th>Alert Status</th>
+              </tr>
+            </thead>
+            <tbody id="replayTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-gray-400); padding: 24px;">
+                  Stream is idle. Click "Start Continuous Stream" or "Step Sample".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 4: EXPLAINABILITY (SHAP) ==================== -->
+    <section id="tab-shap" class="tab-pane">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em;">Explainable AI & Model Feature Attribution</h2>
+        <p style="color: var(--text-gray-400); font-size: 0.85rem;" id="shapHeaderSub">
+          Feature importances dynamically extracted from the trained decision tree ensemble.
+        </p>
+      </div>
+
+      <!-- Top Discriminator Highlights (Dynamic Cards) -->
+      <div id="dynamicTopShapCards" class="grid-3" style="margin-bottom: 24px;">
+        <!-- Dynamically rendered via JS -->
+      </div>
+
+      <!-- Figures Gallery -->
+      <div class="soc-gallery" id="shapGalleryContainer">
+        <div class="soc-gallery-card">
+          <img src="/figures/shap_bar.png" alt="SHAP Bar Plot">
+          <div class="soc-gallery-info">
+            <div class="soc-gallery-title">Global Feature Importance (SHAP Bar)</div>
+            <div class="soc-gallery-sub">Average absolute impact of each memory forensic indicator across test populations.</div>
+          </div>
+        </div>
+
+        <div class="soc-gallery-card">
+          <img src="/figures/shap_beeswarm.png" alt="SHAP Beeswarm Plot">
+          <div class="soc-gallery-info">
+            <div class="soc-gallery-title">Directional Impact (SHAP Beeswarm)</div>
+            <div class="soc-gallery-sub">Visualizes how elevated (red) vs suppressed (blue) metric values push risk toward Ransomware.</div>
+          </div>
+        </div>
+
+        <div class="soc-gallery-card">
+          <img src="/figures/shap_waterfall.png" alt="SHAP Waterfall Plot">
+          <div class="soc-gallery-info">
+            <div class="soc-gallery-title">Local Sample Decomposition (SHAP Waterfall)</div>
+            <div class="soc-gallery-sub">Step-by-step breakdown showing how individual features shift baseline risk to final verdict.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 5: MODEL BENCHMARKS ==================== -->
+    <section id="tab-benchmarks" class="tab-pane">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em;">Model Benchmarks & Comparison Matrix</h2>
+        <p style="color: var(--text-gray-400); font-size: 0.85rem;" id="benchmarkSub">
+          Evaluation matrix dynamically rendered from report data across 5-Fold Stratified Cross-Validation.
+        </p>
+      </div>
+
+      <div class="soc-card" style="margin-bottom: 24px;">
+        <div class="soc-card-header">
+          <div class="soc-card-title">
+            <i data-lucide="award" style="width: 18px; height: 18px;"></i>
+            <span>Evaluated Model Architectures</span>
+          </div>
+        </div>
+        <div class="soc-table-wrap">
+          <table class="soc-table">
+            <thead>
+              <tr>
+                <th>Model Architecture</th>
+                <th>Test Accuracy</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>ROC-AUC</th>
+                <th>5-Fold CV F1 (Mean ± Std)</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarkTableBody">
+              <!-- Populated dynamically by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Curves Gallery -->
+      <div class="soc-gallery">
+        <div class="soc-gallery-card">
+          <img src="/figures/confusion_matrix.png" alt="Confusion Matrix">
+          <div class="soc-gallery-info">
+            <div class="soc-gallery-title">Confusion Matrix (Tuned Random Forest)</div>
+            <div class="soc-gallery-sub">100% true positive recall with zero missed ransomware instances.</div>
+          </div>
+        </div>
+
+        <div class="soc-gallery-card">
+          <img src="/figures/roc_curve.png" alt="ROC Curve">
+          <div class="soc-gallery-info">
+            <div class="soc-gallery-title">Receiver Operating Characteristic (ROC Curve)</div>
+            <div class="soc-gallery-sub">Area Under Curve (AUC) = 1.0000 displaying ideal separation.</div>
+          </div>
+        </div>
+
+        <div class="soc-gallery-card">
+          <img src="/figures/precision_recall_curve.png" alt="Precision-Recall Curve">
+          <div class="soc-gallery-info">
+            <div class="soc-gallery-title">Precision-Recall Curve</div>
+            <div class="soc-gallery-sub">Maintains 99.95%+ precision across entire recall envelope.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 6: AUDIT & HOST TELEMETRY ==================== -->
+    <section id="tab-logs" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em;">Security Audit & Host Telemetry</h2>
+          <p style="color: var(--text-gray-400); font-size: 0.85rem;">Access persistent incident logs, prediction ledgers, and live host resource sampling.</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="soc-btn soc-btn-primary soc-btn-sm soc-btn-pill" onclick="fetchLiveBehavior()">
+            <i data-lucide="cpu" style="width: 14px; height: 14px;"></i> Live Host Snapshot
+          </button>
+          <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill" onclick="loadAllLogs()">
+            <i data-lucide="rotate-cw" style="width: 14px; height: 14px;"></i> Refresh
+          </button>
+          <button class="soc-btn soc-btn-danger soc-btn-sm soc-btn-pill" onclick="clearAllLogs()">
+            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Reset Logs
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Host Telemetry Card -->
+      <div id="liveHostCard" class="soc-card" style="margin-bottom: 24px; display: none;">
+        <div class="soc-card-header">
+          <div class="soc-card-title">
+            <i data-lucide="activity" style="width: 18px; height: 18px;"></i>
+            <span>Live Host Process & Resource Snapshot</span>
+          </div>
+        </div>
+        <div class="grid-4" style="margin-bottom: 16px;">
+          <div>CPU Utilization: <strong id="liveCpu" style="font-family: var(--font-mono); color: var(--text-white);">0%</strong></div>
+          <div>Memory Load: <strong id="liveMem" style="font-family: var(--font-mono); color: var(--text-white);">0%</strong></div>
+          <div>Running Processes: <strong id="livePids" style="font-family: var(--font-mono); color: var(--text-white);">0</strong></div>
+          <div>Sampled At: <strong id="liveTime" style="font-family: var(--font-mono);">--:--:--</strong></div>
+        </div>
+        <div id="topProcessesList" style="font-size: 0.8rem; font-family: var(--font-mono);"></div>
+      </div>
+
+      <!-- Log Switcher & Table -->
+      <div class="soc-card">
+        <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px;">
+          <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill active" id="subTabPred" onclick="switchLogSubTab('predictions')">Predictions Log</button>
+          <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill" id="subTabAlerts" onclick="switchLogSubTab('alerts')">Alerts Log</button>
+          <button class="soc-btn soc-btn-secondary soc-btn-sm soc-btn-pill" id="subTabBeh" onclick="switchLogSubTab('behavioral')">Behavioral Events</button>
+        </div>
+
+        <div class="soc-table-wrap">
+          <table class="soc-table">
+            <thead id="logTableHead"></thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/js/app.js?v=2.2"></script>
+</body>
+</html>

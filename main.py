@@ -100,20 +100,39 @@ def run_behavioral_monitor_mode(duration: int = 15, window: int = 5):
     print("\n[+] Behavioral telemetry saved to logs/behavioral_events.csv.")
 
 
+def run_web_mode(host: str = "127.0.0.1", port: int = 8000):
+    """
+    WEB SOC DASHBOARD MODE:
+    Launches FastAPI & Cyber Defense SOC Web Dashboard.
+    """
+    print(f"\n==================================================")
+    print(f"[>] STARTING RANSOMWARE SOC DASHBOARD")
+    print(f"[>] URL: http://{host}:{port}")
+    print(f"==================================================")
+    try:
+        import uvicorn
+        uvicorn.run("web_app.api:app", host=host, port=port, reload=False)
+    except ImportError:
+        print("[!] uvicorn or fastapi is missing. Run: uv pip install fastapi uvicorn")
+
 def main():
-    parser = argparse.ArgumentParser(description="Ransomware Detection & Monitoring CLI System")
+    parser = argparse.ArgumentParser(description="Ransomware Detection & Monitoring CLI & Web System")
     parser.add_argument(
         "--mode",
-        choices=["replay", "monitor", "behavioral-monitor"],
-        default="replay",
-        help="Operating mode: 'replay' (dataset test), 'monitor' (live compatibility check), 'behavioral-monitor' (watchdog/psutil logger)"
+        choices=["replay", "monitor", "behavioral-monitor", "web"],
+        default="web",
+        help="Operating mode: 'web' (SOC Dashboard UI), 'replay' (dataset test), 'monitor' (live compatibility check), 'behavioral-monitor' (watchdog/psutil logger)"
     )
     parser.add_argument("--samples", type=int, default=5, help="Number of samples to replay in replay mode")
     parser.add_argument("--duration", type=int, default=15, help="Duration in seconds for behavioral monitoring")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host address for web server")
+    parser.add_argument("--port", type=int, default=8000, help="Port for web server")
 
     args = parser.parse_args()
 
-    if args.mode == "replay":
+    if args.mode == "web":
+        run_web_mode(host=args.host, port=args.port)
+    elif args.mode == "replay":
         run_replay_mode(num_samples=args.samples)
     elif args.mode == "monitor":
         run_monitor_mode()
@@ -122,3 +141,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
